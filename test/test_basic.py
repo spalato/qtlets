@@ -3,12 +3,16 @@ from random import randint
 import unittest
 
 from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
+from PySide2.QtCore import Qt
+from PySide2.QtTest import QTest
+
 from traitlets import Integer
 
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit
 
 app = QApplication(sys.argv)
+
 
 class TestBasic(unittest.TestCase):
     def setUp(self):
@@ -37,7 +41,7 @@ class TestBasic(unittest.TestCase):
                 self.setWindowTitle("Directional connection")
 
             def on_btn_click(self):
-                print("Roll!!")
+                #print("Roll!!")
                 # this is done in the calling thread.
                 # We're not exploiting Qt's queued events in this direction
                 self.data.value = randint(0, 10)
@@ -47,13 +51,31 @@ class TestBasic(unittest.TestCase):
         self.form = form
         self.data = d
 
-
     def test_external(self):
         self.data.value += 1
         self.assertEqual(self.data.value, self.form.edit.value())
         self.assertEqual(self.data.value, self.form.otheredit.value())
 
+    def test_roll(self):
+        old = self.data.value
+        while self.data.value == old:
+            QTest.mouseClick(self.form.button, Qt.LeftButton)
+        self.assertNotEqual(old, self.data.value)
+        self.assertEqual(self.data.value, self.form.edit.value())
+        self.assertEqual(self.data.value, self.form.otheredit.value())
+
+    def test_modify_edit(self):
+        while (target := randint(0, 10)) == self.data.value:
+            pass
+        self.assertNotEqual(target, self.data.value)
+        for w in (self.form.edit, self.form.otheredit):
+            w.clear()
+            QTest.keyClicks(w, str(target))
+            QTest.keyClick(w, Qt.Key_Enter)
+            self.assertEqual(target, self.form.edit.value())
+            self.assertEqual(target, self.form.otheredit.value())
+            self.assertEqual(target, self.data.value)
+
 
 if __name__ == '__main__':
     unittest.main()
-    
