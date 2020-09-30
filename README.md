@@ -16,8 +16,8 @@ Desires (in rough priority order):
 - Use either PySide2 or PyQt. See how pyqtgraph does it.
 
 Roadmap:
-[ ] Finish migrating (not done!)
-[ ] Convert current `scratch/try_hasqtlet` to a basic smoke test.
+[x] Finish migrating (not done!)
+[x] Convert current `scratch/try_hasqtlet` to a basic smoke test.
 [ ] Refactor.
 
 # Design
@@ -68,6 +68,7 @@ Cons:
 Pros:
 - Can wrap individual instances or entire classes. Less risks of side-effects.
 - Less likely to run into conflicts. 
+
 Cons:
 - The magic sometimes gets out of hand.
 - Simple wrappers don't preserve type, so we have to be extra careful there.
