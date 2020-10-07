@@ -1,3 +1,5 @@
+# test compatibility with HasTraits classes
+
 import sys
 from random import randint
 import unittest
@@ -6,21 +8,28 @@ from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
 from PySide2.QtCore import Qt
 from PySide2.QtTest import QTest
 
+
+try:
+    from traitlets import Integer, HasTraits
+    TRAITLETS_IS_AVAILABLE = True
+except ImportError:
+    TRAITLETS_IS_AVAILABLE = False
+
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit
 
+app = QApplication(sys.argv)
 
-
-class TestBasic(unittest.TestCase):
+@unittest.skipUnless(TRAITLETS_IS_AVAILABLE, "Traitlets compatibility requires the `traitlets` module.")
+class TestTraitlets(unittest.TestCase):
     def setUp(self):
-        if (app := QApplication.instance()) is None:
-            app = QApplication([])
-        self.app = app
+        def setUp(self):
+            if (app := QApplication.instance()) is None:
+                app = QApplication([])
+            self.app = app
 
-        class Data(HasQtlets):
-            def __init__(self, *a, value=1, **kw):
-                super().__init__(*a, **kw)
-                self.value = value
+        class Data(HasQtlets, HasTraits):
+            value = Integer(default_value=1, min=0, max=10)
 
         class Form(QWidget):
             def __init__(self, parent=None, data=None):
@@ -53,7 +62,6 @@ class TestBasic(unittest.TestCase):
         form = Form(data=d)
         self.form = form
         self.data = d
-
 
     def test_external(self):
         self.data.value += 1
