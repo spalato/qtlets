@@ -17,8 +17,10 @@ receiving and sending the correct data type.
 Create an environment with python 3.8
 
 ## Install dependencies
-`pip install -r requirements.txt`
-`pip install -e .`
+```
+pip install -r requirements.txt
+pip install -e .
+```
 
 ## Run tests
 `python -m unittest`
