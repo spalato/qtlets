@@ -2,13 +2,14 @@ import sys
 from random import randint
 
 from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
-from traitlets import Integer
 
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit
 
 class Data(HasQtlets):
-    value = Integer(default_value=1, min=0, max=10)
+    def __init__(self, value=1, *a, **kw):
+        super().__init__(*a, **kw)
+        self.value = value
 
 
 class Form(QWidget):
@@ -39,14 +40,9 @@ class Form(QWidget):
         self.data.value = randint(0, 10)
 
 
-def update_cb(change):
-    print(f"{change.old} -> {change.new}")
-
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     d = Data(value=3)
-    d.observe(update_cb, names="value")
     form = Form(data=d)
     form.show()
     sys.exit(app.exec_())
