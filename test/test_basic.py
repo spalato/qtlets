@@ -1,13 +1,14 @@
 import sys
-from random import randint
+from random import randint, choices
 import unittest
+from string import printable
 
 from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
 from PySide2.QtCore import Qt
 from PySide2.QtTest import QTest
 
 from qtlets.qtlets import HasQtlets
-from qtlets.widgets import IntEdit
+from qtlets.widgets import IntEdit, StrEdit
 
 
 class TestBasic(unittest.TestCase):
@@ -47,6 +48,10 @@ class TestBasic(unittest.TestCase):
                 self.data.value = randint(0, 10)
         return Form(*a, **kw)
 
+    def new_value(self, current):
+        while (target := randint(0, 10)) == current:
+            pass
+        return target
 
     def setUp(self):
         if (app := QApplication.instance()) is None:
@@ -54,6 +59,10 @@ class TestBasic(unittest.TestCase):
         self.app = app
         self.data = self.make_data()
         self.form = self.make_form(data=self.data)
+
+    def test_initial_sync(self):
+        self.assertEqual(self.data.value, self.form.edit.value())
+        self.assertEqual(self.data.value, self.form.otheredit.value())
 
     def test_external(self):
         self.data.value += 1
@@ -69,8 +78,7 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(self.data.value, self.form.otheredit.value())
 
     def test_modify_edit(self):
-        while (target := randint(0, 10)) == self.data.value:
-            pass
+        target = self.new_value(self.data.value)
         self.assertNotEqual(target, self.data.value)
         for w in (self.form.edit, self.form.otheredit):
             w.clear()
@@ -81,6 +89,53 @@ class TestBasic(unittest.TestCase):
             self.assertEqual(target, self.data.value)
 
 
+class TestStr(TestBasic):
+    def make_data(self):
+        class Data(HasQtlets):
+            def __init__(self, *a,
+                         value="TEST",
+                         **kw):
+                super().__init__(*a, **kw)
+                self.value = value
+
+        return Data()
+
+    def make_form(self, *a, **kw):
+        class Form(QWidget):
+            def __init__(self, parent=None, data=None):
+                super().__init__(parent)
+                self.data = data
+
+                self.edit = StrEdit("...")
+                self.otheredit = StrEdit("???")
+                # self.otheredit.setEnabled(False)
+                self.button = QPushButton("Roll!")
+
+                layout = QVBoxLayout()
+                for w in [self.edit, self.otheredit, self.button]:
+                    layout.addWidget(w)
+                self.setLayout(layout)
+
+                data.link_widget(self.edit, "value")
+                data.link_widget(self.otheredit, "value")
+
+                self.button.clicked.connect(self.on_btn_click)
+                self.setWindowTitle("Directional connection")
+
+            def on_btn_click(self):
+                self.data.value = "".join(choices(printable, k=10))
+
+        return Form(*a, **kw)
+
+    def new_value(self, current):
+        while (target := "".join(choices(printable, k=10))) == current:
+            pass
+        return target
+
+    def test_external(self):
+        self.data.value += "append"
+        self.assertEqual(self.data.value, self.form.edit.value())
+        self.assertEqual(self.data.value, self.form.otheredit.value())
 
 if __name__ == '__main__':
     unittest.main()

@@ -4,8 +4,8 @@ from PySide2.QtCore import Signal
 from PySide2.QtGui import QIntValidator, QDoubleValidator
 from PySide2.QtWidgets import QPushButton, QLabel, QComboBox, QLineEdit
 
-class TypedLineEdit(QLineEdit):
 
+class TypedLineEdit(QLineEdit):
     def __init__(self, contents, *a, **kw):
         super().__init__(str(contents), *a, **kw)
         self.editingFinished.connect(self.onValueEdited)
@@ -69,3 +69,10 @@ class FloatEdit(TypedLineEdit):
 
     def value(self):
         return float(self.text())
+
+
+class StrEdit(TypedLineEdit):
+    valueEdited = Signal(str)
+
+    def value(self):
+        return self.text()

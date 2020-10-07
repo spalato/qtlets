@@ -25,7 +25,7 @@ pip install -e .
 ## Run tests
 `python -m unittest`
 
-# Plan
+# Desired features
 
 We aim to achieve (in rough priority order):
 - Keep in sync widgets and data, cutting on the boilerplate.

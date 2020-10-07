@@ -21,7 +21,7 @@ class Qtlet(QObject):
     def __init__(self, inst, attr, *a, **kw):
         super().__init__(*a, **kw)
         self.widgets = []
-        self.inst = inst # or use this to set attribute of the attribute proxy descriptor?
+        self.inst = inst
         self.attr = attr
 
     @property
@@ -42,13 +42,6 @@ class Qtlet(QObject):
         """
         # note this is exactly the same as @value.setter...
         self.value = value
-
-    def notify_widgets(self, change):
-        """
-        Update the widgets to reflect a change in the underlying data.
-        """
-        # todo: find a more elegant way to pick the signal. Maybe it's ok?
-        self.data_changed.emit(change.new)
 
     def sync_widgets(self):
         """Force the update of all linked widgets with the current value."""
