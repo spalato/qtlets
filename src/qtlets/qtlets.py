@@ -17,15 +17,13 @@ class Qtlet(QObject):
     Adapter between `traitlets` notification and Qt Signals and Slots.
     """
     data_changed = Signal(object)  # fallback
+
     def __init__(self, inst, attr, *a, **kw):
         super().__init__(*a, **kw)
         self.widgets = []
         self.inst = inst # or use this to set attribute of the attribute proxy descriptor?
         self.attr = attr
-        #inst.observe(self.notify_widgets, names=attr) # link qtlet to traitlet
 
-    # we're building a proxy to act as a descriptor... can we grab the attribute
-    # directly?
     @property
     def value(self):
         return getattr(self.inst, self.attr)
@@ -59,6 +57,7 @@ class Qtlet(QObject):
     def link_widget(self, widget): # todo: add options for read and write?
         """Link a widget to the trait."""
         # todo: use a function and dispatch to get the two methods (widget.valueEdited, widget.setValue)
+        # todo: add bounds to validator.. here is probably the best, in "link"
         widget.valueEdited.connect(self.on_widget_edited)
         self.data_changed.connect(widget.setValue)
         self.widgets.append(widget)
@@ -69,28 +68,44 @@ class Qtlet(QObject):
         self.widgets.remove(widget)
 
 
-# todo: add bounds to validator.. here is probably the best, in "link"
 class IntQtlet(Qtlet):
     data_changed = Signal(int)
+
 
 class FloatQtlet(Qtlet):
     data_changed = Signal(float)
 
+class StrQtlet(Qtlet):
+    data_changed = Signal(str)
+
+
+class BoolQtlet(Qtlet):
+    data_changed = Signal(bool)
+
 @singledispatch
-def qtlet_type(type_):
+def qtlet_type(typ):
+    logger.debug(f"Could not find specific Qtlet type for: {typ!r}")
     return Qtlet
 
+
 @qtlet_type.register(int)
-# @qtlet_type.register(trt.Integer)
-# @qtlet_type.register(trt.CInt)
-def qtl_int(trait):
+def qtl_int(typ):
     return IntQtlet
 
+
 @qtlet_type.register(float)
-# @qtlet_type.register(trt.Float)
-# @qtlet_type.register(trt.CFloat)
-def qtl_float(trait):
+def qtl_float(typ):
     return FloatQtlet
+
+
+@qtlet_type.register(str)
+def qtl_str(typ):
+    return StrQtlet
+
+
+@qtlet_type.register(bool)
+def qtl_bool(typ):
+    return BoolQtlet
 
 
 class HasQtlets(object):

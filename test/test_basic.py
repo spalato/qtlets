@@ -10,18 +10,18 @@ from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit
 
 
-
 class TestBasic(unittest.TestCase):
-    def setUp(self):
-        if (app := QApplication.instance()) is None:
-            app = QApplication([])
-        self.app = app
 
+    def make_data(self):
         class Data(HasQtlets):
-            def __init__(self, *a, value=1, **kw):
+            def __init__(self, *a,
+                         value=1,
+                         **kw):
                 super().__init__(*a, **kw)
                 self.value = value
+        return Data(value=3)
 
+    def make_form(self, *a, **kw):
         class Form(QWidget):
             def __init__(self, parent=None, data=None):
                 super().__init__(parent)
@@ -44,16 +44,16 @@ class TestBasic(unittest.TestCase):
                 self.setWindowTitle("Directional connection")
 
             def on_btn_click(self):
-                #print("Roll!!")
-                # this is done in the calling thread.
-                # We're not exploiting Qt's queued events in this direction
                 self.data.value = randint(0, 10)
+        return Form(*a, **kw)
 
-        d = Data(value=3)
-        form = Form(data=d)
-        self.form = form
-        self.data = d
 
+    def setUp(self):
+        if (app := QApplication.instance()) is None:
+            app = QApplication([])
+        self.app = app
+        self.data = self.make_data()
+        self.form = self.make_form(data=self.data)
 
     def test_external(self):
         self.data.value += 1
@@ -79,6 +79,7 @@ class TestBasic(unittest.TestCase):
             self.assertEqual(target, self.form.edit.value())
             self.assertEqual(target, self.form.otheredit.value())
             self.assertEqual(target, self.data.value)
+
 
 
 if __name__ == '__main__':

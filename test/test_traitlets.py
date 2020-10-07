@@ -23,10 +23,9 @@ app = QApplication(sys.argv)
 @unittest.skipUnless(TRAITLETS_IS_AVAILABLE, "Traitlets compatibility requires the `traitlets` module.")
 class TestTraitlets(unittest.TestCase):
     def setUp(self):
-        def setUp(self):
-            if (app := QApplication.instance()) is None:
-                app = QApplication([])
-            self.app = app
+        if (app := QApplication.instance()) is None:
+            app = QApplication([])
+        self.app = app
 
         class Data(HasQtlets, HasTraits):
             value = Integer(default_value=1, min=0, max=10)
