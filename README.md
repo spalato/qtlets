@@ -29,7 +29,7 @@ Create an environment with python 3.8
 `pip install -e .`
 
 ## Run tests
-`python test/test_basic.py`
+`python -m unittest`
 
 # Design
 
