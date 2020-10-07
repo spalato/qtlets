@@ -16,9 +16,20 @@ Desires (in rough priority order):
 - Use either PySide2 or PyQt. See how pyqtgraph does it.
 
 Roadmap:
-[x] Finish migrating (not done!)
-[x] Convert current `scratch/try_hasqtlet` to a basic smoke test.
-[ ] Refactor.
+- [x] Finish migrating (not done!)
+- [x] Convert current `scratch/try_hasqtlet` to a basic smoke test.
+- [ ] Refactor.
+
+# Getting started
+
+Create an environment with python 3.8
+
+## Install dependencies
+`pip install -r requirements.txt`
+`pip install -e .`
+
+## Run tests
+`python -m unittest`
 
 # Design
 
