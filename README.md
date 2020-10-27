@@ -23,7 +23,7 @@ pip install -e .
 ```
 
 ## Run tests
-`python -m unittest`
+`py.test`
 
 # Desired features
 
