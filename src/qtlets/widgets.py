@@ -4,6 +4,7 @@ from PySide2.QtCore import Signal
 from PySide2.QtGui import QIntValidator, QDoubleValidator
 from PySide2.QtWidgets import QPushButton, QLabel, QComboBox, QLineEdit
 
+logger = logging.getLogger(__name__)
 
 class TypedLineEdit(QLineEdit):
     def __init__(self, contents, *a, **kw):
@@ -76,3 +77,19 @@ class StrEdit(TypedLineEdit):
 
     def value(self):
         return self.text()
+
+
+class ValuedComboBox(QComboBox):
+    valueEdited = Signal(object)
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.activated.connect(self.__onIndexChanged)
+
+    def __onIndexChanged(self):
+        self.valueEdited.emit(self.currentData())
+
+    def setValue(self, obj):
+        i = self.findData(obj)
+        logger.debug(f"obj index: {obj!r} {i}")
+        self.setCurrentIndex(i)
