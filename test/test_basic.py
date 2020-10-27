@@ -1,7 +1,12 @@
 import sys
+from collections import namedtuple
+from functools import partial
 from random import randint, choices
-import unittest
 from string import ascii_letters, punctuation, digits
+from types import SimpleNamespace
+
+import pytest
+
 
 from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
 from PySide2.QtCore import Qt
@@ -10,133 +15,157 @@ from PySide2.QtTest import QTest
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit, StrEdit
 
+TRAITLETS_IS_AVAILABLE = False
+try:
+    from traitlets import Integer, HasTraits, Unicode
+    TRAITLETS_IS_AVAILABLE = True
+except ImportError:
+    pass
+ATTR_IS_AVAILABLE = False
+try:
+    import attr  # attr is a dependency of pytest...
+    ATTR_IS_AVAILABLE = True
+except ImportError:
+    pass
+
 printable = ascii_letters + punctuation + digits
 
-class TestBasic(unittest.TestCase):
+@pytest.fixture(scope="session")
+def app():
+#    if (app := QApplication.instance()) is None:
+    app = QApplication([])
+    return app
 
-    def make_data(self):
-        class Data(HasQtlets):
-            def __init__(self, *a,
-                         value=1,
-                         **kw):
-                super().__init__(*a, **kw)
-                self.value = value
-        return Data(value=3)
+@pytest.fixture(params=[int, str])
+def data_type(request):
+    return request.param
 
-    def make_form(self, *a, **kw):
-        class Form(QWidget):
-            def __init__(self, parent=None, data=None):
-                super().__init__(parent)
-                self.data = data
+dtypes = {
+    str: SimpleNamespace(
+        dtype=str,
+        init_value="TEST",
+        random_value=lambda : "".join(choices(printable, k=10)),
+        edit_type=StrEdit),
+    int: SimpleNamespace(
+        dtype=int,
+        init_value=1,
+        random_value=lambda : randint(0, 10),
+        edit_type=IntEdit)
+}
+if TRAITLETS_IS_AVAILABLE:
+    dtypes[str].traitlet = Unicode
+    dtypes[int].traitlet = Integer
 
-                self.edit = IntEdit("...")
-                self.otheredit = IntEdit("???")
-                # self.otheredit.setEnabled(False)
-                self.button = QPushButton("Roll!")
+@pytest.fixture
+def dtype_config(data_type):
+    return dtypes[data_type]
 
-                layout = QVBoxLayout()
-                for w in [self.edit, self.otheredit, self.button]:
-                    layout.addWidget(w)
-                self.setLayout(layout)
 
-                data.link_widget(self.edit, "value")
-                data.link_widget(self.otheredit, "value")
+def vanilla(dtype_config):
+    v = dtype_config.init_value
+    class Data(HasQtlets):
+        def __init__(self, *a,
+                     value=v,
+                     **kw):
+            super().__init__(*a, **kw)
+            self.value = value
+    return Data()
 
-                self.button.clicked.connect(self.on_btn_click)
-                self.setWindowTitle("Directional connection")
+def traitlets(dtype_config):
+    class Data(HasQtlets, HasTraits):
+        value = dtype_config.traitlet(default_value=dtype_config.init_value)
+    return Data()
 
-            def on_btn_click(self):
-                self.data.value = randint(0, 10)
-        return Form(*a, **kw)
+def attrs(dtype_config):
+    @attr.s
+    class Data(HasQtlets):
+        value: dtype_config.dtype = attr.ib(default=dtype_config.init_value)
+        def __attrs_post_init__(self):
+            super().__init__() # tsk tsk tsk...
+    return Data()
 
-    def new_value(self, current):
-        while (target := randint(0, 10)) == current:
+
+@pytest.fixture(
+    params=[
+        vanilla,
+        pytest.param(traitlets,
+            marks=pytest.mark.skipif(not TRAITLETS_IS_AVAILABLE, reason="Requires the `traitlets` module.")
+        ),
+        pytest.param(attrs,
+            marks=pytest.mark.skipif(not ATTR_IS_AVAILABLE, reason="Requires the `attrs` module.")
+        ),
+    ]
+)
+def data_instance(request, dtype_config):
+    return request.param(dtype_config)
+
+
+@pytest.fixture
+def new_value(dtype_config):
+    def f(current):
+        while (target := dtype_config.random_value()) == current:
             pass
         return target
+    return f
 
-    def setUp(self):
-        if (app := QApplication.instance()) is None:
-            app = QApplication([])
-        self.app = app
-        self.data = self.make_data()
-        self.form = self.make_form(data=self.data)
+@pytest.fixture
+def form(dtype_config, data_instance, new_value):
+    edit_cls = dtype_config.edit_type
+    class Form(QWidget):
+        def __init__(self, parent=None, data=None):
+            super().__init__(parent)
+            self.data = data
+            self.edit = edit_cls("...")
 
-    def test_initial_sync(self):
-        self.assertEqual(self.data.value, self.form.edit.value())
-        self.assertEqual(self.data.value, self.form.otheredit.value())
+            self.otheredit = edit_cls("???")
+            # self.otheredit.setEnabled(False)
+            self.button = QPushButton("Roll!")
 
-    def test_external(self):
-        self.data.value += 1
-        self.assertEqual(self.data.value, self.form.edit.value())
-        self.assertEqual(self.data.value, self.form.otheredit.value())
+            layout = QVBoxLayout()
+            for w in [self.edit, self.otheredit, self.button]:
+                layout.addWidget(w)
+            self.setLayout(layout)
 
-    def test_roll(self):
-        old = self.data.value
-        while self.data.value == old:
-            QTest.mouseClick(self.form.button, Qt.LeftButton)
-        self.assertNotEqual(old, self.data.value)
-        self.assertEqual(self.data.value, self.form.edit.value())
-        self.assertEqual(self.data.value, self.form.otheredit.value())
+            data.link_widget(self.edit, "value")
+            data.link_widget(self.otheredit, "value")
 
-    def test_modify_edit(self):
-        target = self.new_value(self.data.value)
-        self.assertNotEqual(target, self.data.value)
-        for w in (self.form.edit, self.form.otheredit):
+            self.button.clicked.connect(self.on_btn_click)
+            self.setWindowTitle("Directional connection")
+
+        def on_btn_click(self):
+            self.data.value = new_value(self.data.value)
+
+    return Form(data=data_instance)
+
+
+@pytest.mark.usefixtures("app")
+class TestBasic:
+
+    def test_initial_sync(self, data_instance, form):
+        assert data_instance.value == form.edit.value()
+        assert data_instance.value == form.otheredit.value()
+
+    def test_external(self, data_instance, form, new_value):
+        data_instance.value = new_value(data_instance.value)
+        assert data_instance.value == form.edit.value()
+        assert data_instance.value == form.otheredit.value()
+
+    def test_roll(self, data_instance, form):
+        old = data_instance.value
+        #while data_instance.value == old:
+        QTest.mouseClick(form.button, Qt.LeftButton)
+        assert old != data_instance.value
+        assert data_instance.value == form.edit.value()
+        assert data_instance.value == form.otheredit.value()
+
+    def test_modify_edit(self, data_instance, form, new_value):
+        target = new_value(data_instance.value)
+        assert target != data_instance.value
+        for w in (form.edit, form.otheredit):
             w.clear()
             QTest.keyClicks(w, str(target))
             QTest.keyClick(w, Qt.Key_Enter)
-            self.assertEqual(target, self.form.edit.value())
-            self.assertEqual(target, self.form.otheredit.value())
-            self.assertEqual(target, self.data.value)
+            assert data_instance.value == form.edit.value()
+            assert data_instance.value == form.otheredit.value()
+            assert data_instance.value == target
 
-
-class TestStr(TestBasic):
-    def make_data(self):
-        class Data(HasQtlets):
-            def __init__(self, *a,
-                         value="TEST",
-                         **kw):
-                super().__init__(*a, **kw)
-                self.value = value
-
-        return Data()
-
-    def make_form(self, *a, **kw):
-        class Form(QWidget):
-            def __init__(self, parent=None, data=None):
-                super().__init__(parent)
-                self.data = data
-
-                self.edit = StrEdit("...")
-                self.otheredit = StrEdit("???")
-                # self.otheredit.setEnabled(False)
-                self.button = QPushButton("Roll!")
-
-                layout = QVBoxLayout()
-                for w in [self.edit, self.otheredit, self.button]:
-                    layout.addWidget(w)
-                self.setLayout(layout)
-
-                data.link_widget(self.edit, "value")
-                data.link_widget(self.otheredit, "value")
-
-                self.button.clicked.connect(self.on_btn_click)
-                self.setWindowTitle("Directional connection")
-
-            def on_btn_click(self):
-                self.data.value = "".join(choices(printable, k=10))
-
-        return Form(*a, **kw)
-
-    def new_value(self, current):
-        while (target := "".join(choices(printable, k=10))) == current:
-            pass
-        return target
-
-    def test_external(self):
-        self.data.value += "append"
-        self.assertEqual(self.data.value, self.form.edit.value())
-        self.assertEqual(self.data.value, self.form.otheredit.value())
-
-if __name__ == '__main__':
-    unittest.main()
