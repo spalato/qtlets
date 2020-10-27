@@ -18,7 +18,7 @@ except ImportError:
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit
 
-app = QApplication(sys.argv)
+#app = QApplication(sys.argv)
 
 @unittest.skipUnless(TRAITLETS_IS_AVAILABLE, "Traitlets compatibility requires the `traitlets` module.")
 class TestTraitlets(unittest.TestCase):

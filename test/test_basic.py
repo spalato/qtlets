@@ -1,7 +1,7 @@
 import sys
 from random import randint, choices
 import unittest
-from string import printable
+from string import ascii_letters, punctuation, digits
 
 from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
 from PySide2.QtCore import Qt
@@ -10,6 +10,7 @@ from PySide2.QtTest import QTest
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit, StrEdit
 
+printable = ascii_letters + punctuation + digits
 
 class TestBasic(unittest.TestCase):
 
