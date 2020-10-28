@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 
-from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
+from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout
 from PySide2.QtCore import Qt
 from PySide2.QtTest import QTest
 
@@ -30,11 +30,7 @@ except ImportError:
 
 printable = ascii_letters + punctuation + digits
 
-@pytest.fixture(scope="session")
-def app():
-#    if (app := QApplication.instance()) is None:
-    app = QApplication([])
-    return app
+
 
 @pytest.fixture(params=[int, str])
 def data_type(request):

@@ -5,6 +5,9 @@ from functools import singledispatch
 import logging
 
 from PySide2.QtCore import QObject, Signal
+from PySide2.QtWidgets import QCheckBox, QDoubleSpinBox, QLineEdit
+
+from .widgets import TypedLineEdit, ValuedComboBox
 
 logger = logging.getLogger(__name__)
 
@@ -47,18 +50,22 @@ class Qtlet(QObject):
         """Force the update of all linked widgets with the current value."""
         self.data_changed.emit(self.value)
 
-    def link_widget(self, widget): # todo: add options for read and write?
+    def link_widget(self, widget, widget_signal=None, widget_slot=None):
         """Link a widget to the trait."""
         # todo: use a function and dispatch to get the two methods (widget.valueEdited, widget.setValue)
         # todo: add bounds to validator.. here is probably the best, in "link"
-        widget.valueEdited.connect(self.on_widget_edited)
-        self.data_changed.connect(widget.setValue)
+        if widget_signal is None:
+            widget_signal = notifier_signal(widget)
+        widget_signal.connect(self.on_widget_edited)
+        if widget_slot is None:
+            widget_slot = setter_slot(widget)
+        self.data_changed.connect(widget_slot)
         self.widgets.append(widget)
         self.data_changed.emit(self.value)
 
-    def unlink_widget(self, widget):
-        widget.valueEdited.disconnect(widget.setValue)
-        self.widgets.remove(widget)
+    # def unlink_widget(self, widget): # this is not used...
+    #     notifier_signal(widget).disconnect(widget.setValue)
+    #     self.widgets.remove(widget)
 
 
 class IntQtlet(Qtlet):
@@ -101,6 +108,52 @@ def qtl_bool(typ):
     return BoolQtlet
 
 
+@singledispatch
+def notifier_signal(widget) -> Signal: # todo: we should probably add another argument
+    if hasattr(widget, "valueEdited"):
+        return widget.valueEdited
+    raise TypeError("Could not find signal for widget")
+
+@notifier_signal.register(QCheckBox)
+def notifier_checkbox(widget):
+    return widget.clicked
+
+@notifier_signal.register(QDoubleSpinBox)
+def notifier_spin(widget):
+    return widget.valueChanged
+
+@notifier_signal.register(QLineEdit)
+def notifier_linedit(widget):
+    return widget.textEdited
+
+@notifier_signal.register(TypedLineEdit)
+def notifier_typed(widget):
+    return widget.valueEdited
+
+
+@singledispatch
+def setter_slot(widget):
+    if hasattr(widget, "setValue"):
+        return widget.setValue
+    raise TypeError("Could not find setter method for widget")
+
+@setter_slot.register(QCheckBox)
+def setter_checkbox(widget):
+    return widget.setChecked
+
+@setter_slot.register(QDoubleSpinBox)
+def setter_spin(widget):
+    return widget.setValue
+
+@setter_slot.register(QLineEdit)
+def setter_linedit(widget):
+    return widget.setText
+
+@setter_slot.register(TypedLineEdit)
+def setter_typed(widget):
+    return widget.setValue
+
+
 class HasQtlets(object):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -110,7 +163,7 @@ class HasQtlets(object):
     # we may need to intercept the setattr call if there is a qtlet, in order
     # to handle Qt threads...
 
-    def link_widget(self, widget, attr_name: str):
+    def link_widget(self, widget, attr_name: str, widget_signal=None, widget_slot=None):
         """Link widget to attr"""
         # make sure qlet exists
         if attr_name not in self.qtlets:
@@ -119,7 +172,7 @@ class HasQtlets(object):
         else:
             qtl = self.qtlets[attr_name]
         # link qtlet to widget.
-        qtl.link_widget(widget)
+        qtl.link_widget(widget, widget_signal=widget_signal, widget_slot=widget_slot)
 
     def __setattr__(self, key, value):
         # alternatively:
@@ -130,20 +183,18 @@ class HasQtlets(object):
             if hasattr(self, "qtlets") and key in self.qtlets:
                 self.qtlets[key].sync_widgets()
 
-    def unlink_widget(self, widget, attr_name: str):
-        # unlink qtlet from widget
-        # if qtlet doesn't have any widgets left, remove it.
-        qtl = self.qtlets[attr_name]
-        qtl.unlink_widget(widget)
-        if not qtl.has_widgets:
-            del self.qtlets[attr_name]
+    # def unlink_widget(self, widget, attr_name: str):
+    #     # unlink qtlet from widget
+    #     # if qtlet doesn't have any widgets left, remove it.
+    #     qtl = self.qtlets[attr_name]
+    #     qtl.unlink_widget(widget)
+    #     if not qtl.has_widgets:
+    #         del self.qtlets[attr_name]
 
-    def create_qtlet(self, attr_name: str, type_=None):
+    def create_qtlet(self, attr_name: str, cls=None):
         # figure out the correct qtl type
-        if type_ is None:
-            type_ = type(getattr(self, attr_name))
+        if cls is None:
+            cls = qtlet_type(getattr(self, attr_name))
 
-        cls = qtlet_type(type_)
-        # setup
         qtl = cls(self, attr_name)
         return qtl
