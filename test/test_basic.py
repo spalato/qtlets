@@ -70,23 +70,43 @@ def vanilla(dtype_config):
             self.value = value
     return Data()
 
+
+def properties(dtype_config):
+    class Data(HasQtlets):
+        def __init__(self, *a, value=dtype_config.init_value, **kw):
+            super().__init__(*a, **kw)
+            self._value = value
+
+        @property
+        def value(self):
+            return self._value
+
+        @value.setter
+        def value(self, v):
+            self._value = v
+    return Data()
+
+
 def traitlets(dtype_config):
     class Data(HasQtlets, HasTraits):
         value = dtype_config.traitlet(default_value=dtype_config.init_value)
     return Data()
 
+
 def attrs(dtype_config):
     @attr.s
-    class Data(HasQtlets):
+    class Base:
         value: dtype_config.dtype = attr.ib(default=dtype_config.init_value)
-        def __attrs_post_init__(self):
-            super().__init__() # tsk tsk tsk...
+        # def __attrs_post_init__(self):
+        #     super().__init__() # tsk tsk tsk...
+    class Data(HasQtlets, Base): pass
     return Data()
 
 
 @pytest.fixture(
     params=[
         vanilla,
+        properties,
         pytest.param(traitlets,
             marks=pytest.mark.skipif(not TRAITLETS_IS_AVAILABLE, reason="Requires the `traitlets` module.")
         ),

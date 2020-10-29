@@ -163,7 +163,8 @@ class HasQtlets(object):
     # we may need to intercept the setattr call if there is a qtlet, in order
     # to handle Qt threads...
 
-    def link_widget(self, widget, attr_name: str, widget_signal=None, widget_slot=None):
+    def link_widget(self, widget, attr_name: str, widget_signal=None,
+                    widget_slot=None):
         """Link widget to attr"""
         # make sure qlet exists
         if attr_name not in self.qtlets:
@@ -172,11 +173,10 @@ class HasQtlets(object):
         else:
             qtl = self.qtlets[attr_name]
         # link qtlet to widget.
-        qtl.link_widget(widget, widget_signal=widget_signal, widget_slot=widget_slot)
+        qtl.link_widget(widget, widget_signal=widget_signal,
+                        widget_slot=widget_slot)
 
     def __setattr__(self, key, value):
-        # alternatively:
-        # self.qtlets[key].data_changed.emit(value) after super().__setattr__
         try:
             super().__setattr__(key, value)
         finally:
@@ -192,6 +192,7 @@ class HasQtlets(object):
     #         del self.qtlets[attr_name]
 
     def create_qtlet(self, attr_name: str, cls=None):
+        # we need to put this into a function...
         # figure out the correct qtl type
         if cls is None:
             cls = qtlet_type(getattr(self, attr_name))
