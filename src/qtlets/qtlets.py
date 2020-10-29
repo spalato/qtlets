@@ -5,7 +5,7 @@ from functools import singledispatch
 import logging
 
 from PySide2.QtCore import QObject, Signal
-from PySide2.QtWidgets import QCheckBox, QDoubleSpinBox, QLineEdit
+from PySide2.QtWidgets import QCheckBox, QLineEdit, QAbstractSpinBox
 
 from .widgets import TypedLineEdit, ValuedComboBox
 
@@ -118,7 +118,7 @@ def notifier_signal(widget) -> Signal: # todo: we should probably add another ar
 def notifier_checkbox(widget):
     return widget.clicked
 
-@notifier_signal.register(QDoubleSpinBox)
+@notifier_signal.register(QAbstractSpinBox)
 def notifier_spin(widget):
     return widget.valueChanged
 
@@ -141,7 +141,7 @@ def setter_slot(widget):
 def setter_checkbox(widget):
     return widget.setChecked
 
-@setter_slot.register(QDoubleSpinBox)
+@setter_slot.register(QAbstractSpinBox)
 def setter_spin(widget):
     return widget.setValue
 

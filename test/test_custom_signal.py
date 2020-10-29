@@ -4,7 +4,7 @@ from string import ascii_letters, punctuation, digits
 
 import pytest
 
-from PySide2.QtWidgets import QWidget, QLineEdit, QDoubleSpinBox, QVBoxLayout
+from PySide2.QtWidgets import QWidget, QLineEdit, QDoubleSpinBox, QVBoxLayout, QSpinBox
 
 from qtlets import HasQtlets
 
@@ -23,6 +23,7 @@ def data_instance():
             self.text = text
             self.number = number
     return Data()
+
 
 @pytest.fixture(
     params = (
@@ -47,7 +48,7 @@ def form(sig_names, data_instance):
             self.data = data
 
             self.lineedit = QLineEdit("")
-            self.spin = QDoubleSpinBox()
+            self.spin = QSpinBox()
 
             self.setLayout(QVBoxLayout())
             for w in [self.lineedit, self.spin]:
