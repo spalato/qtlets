@@ -8,7 +8,8 @@ from types import SimpleNamespace
 import pytest
 
 
-from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout
+from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, \
+    QLineEdit
 from PySide2.QtCore import Qt
 from PySide2.QtTest import QTest
 
@@ -31,10 +32,12 @@ except ImportError:
 printable = ascii_letters + punctuation + digits
 
 
-
 @pytest.fixture(params=[int, str])
 def data_type(request):
     return request.param
+
+# we could expand our test matrix to test multiple edit_types per dtype.
+
 
 dtypes = {
     str: SimpleNamespace(
@@ -46,7 +49,7 @@ dtypes = {
         dtype=int,
         init_value=1,
         random_value=lambda : randint(0, 10),
-        edit_type=IntEdit)
+        edit_type=IntEdit),
 }
 if TRAITLETS_IS_AVAILABLE:
     dtypes[str].traitlet = Unicode
