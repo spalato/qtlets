@@ -63,9 +63,7 @@ def dtype_config(data_type):
 def vanilla(dtype_config):
     v = dtype_config.init_value
     class Data(HasQtlets):
-        def __init__(self, *a,
-                     value=v,
-                     **kw):
+        def __init__(self, *a, value=v, **kw):
             super().__init__(*a, **kw)
             self.value = value
     return Data()

@@ -3,6 +3,7 @@
 
 from functools import singledispatch
 import logging
+from weakref import proxy
 
 from PySide2.QtCore import QObject, Signal
 from PySide2.QtWidgets import QCheckBox, QLineEdit, QAbstractSpinBox
@@ -23,7 +24,7 @@ class Qtlet(QObject):
 
     def __init__(self, inst, attr, *a, **kw):
         super().__init__(*a, **kw)
-        self.widgets = []
+        self.widgets = []  # holds weakref.proxy elements.
         self.inst = inst
         self.attr = attr
 
@@ -60,7 +61,7 @@ class Qtlet(QObject):
         if widget_slot is None:
             widget_slot = setter_slot(widget)
         self.data_changed.connect(widget_slot)
-        self.widgets.append(widget)
+        self.widgets.append(proxy(widget))
         self.data_changed.emit(self.value)
 
     # def unlink_widget(self, widget): # this is not used...
@@ -160,8 +161,6 @@ class HasQtlets(object):
         # I think defining this here will be ok. We'll create the qtlets later
         self.qtlets = {}
 
-    # we may need to intercept the setattr call if there is a qtlet, in order
-    # to handle Qt threads...
 
     def link_widget(self, widget, attr_name: str, widget_signal=None,
                     widget_slot=None):
