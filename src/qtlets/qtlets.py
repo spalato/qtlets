@@ -5,7 +5,7 @@ from functools import singledispatch
 import logging
 from weakref import proxy
 
-from PySide2.QtCore import QObject, Signal
+from PySide2.QtCore import QObject, Signal, QTimer
 from PySide2.QtWidgets import QCheckBox, QLineEdit, QAbstractSpinBox
 
 from .widgets import TypedLineEdit, ValuedComboBox
@@ -27,6 +27,7 @@ class Qtlet(QObject):
         self.widgets = []  # holds weakref.proxy elements.
         self.inst = inst
         self.attr = attr
+        self.timer = None
 
     @property
     def value(self):
@@ -63,6 +64,18 @@ class Qtlet(QObject):
         self.data_changed.connect(widget_slot)
         self.widgets.append(proxy(widget))
         self.data_changed.emit(self.value)
+        return self
+
+    def use_polling(self, interval: float=20):
+        """Checks and update the value on a fixed interval, in ms."""
+        if self.timer is None:
+            self.timer = QTimer(parent=self)
+        self.timer.setInterval(interval)
+        self.timer.timeout.connect(self.sync_widgets)
+        self.timer.start()
+        # TODO: we could need a stop and a teardown...
+        return self
+        
 
     # def unlink_widget(self, widget): # this is not used...
     #     notifier_signal(widget).disconnect(widget.setValue)
@@ -163,7 +176,7 @@ class HasQtlets(object):
 
 
     def link_widget(self, widget, attr_name: str, widget_signal=None,
-                    widget_slot=None):
+                    widget_slot=None) -> Qtlet:
         """Link widget to attr"""
         # make sure qlet exists
         if attr_name not in self.qtlets:
@@ -172,7 +185,7 @@ class HasQtlets(object):
         else:
             qtl = self.qtlets[attr_name]
         # link qtlet to widget.
-        qtl.link_widget(widget, widget_signal=widget_signal,
+        return qtl.link_widget(widget, widget_signal=widget_signal,
                         widget_slot=widget_slot)
 
     def __setattr__(self, key, value):
