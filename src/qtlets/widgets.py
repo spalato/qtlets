@@ -93,3 +93,18 @@ class ValuedComboBox(QComboBox):
         i = self.findData(obj)
         logger.debug(f"obj index: {obj!r} {i}")
         self.setCurrentIndex(i)
+
+
+class TextComboBox(QComboBox):
+    valueEdited = Signal(str)
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.activated.connect(self.__onIndexChanged)
+
+    def __onIndexChanged(self):
+        self.valueEdited.emit(self.currentText())
+
+    def setValue(self, txt):
+        i = self.findText(txt)
+        logger.debug(f"txt index: {txt!r} {i}")
+        self.setCurrentIndex(i)
