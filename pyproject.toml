@@ -24,4 +24,4 @@ where = ["src"]
 include = ["qtlets*"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "attrs", "traitlets"]

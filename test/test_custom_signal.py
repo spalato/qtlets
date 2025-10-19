@@ -4,7 +4,7 @@ from string import ascii_letters, punctuation, digits
 
 import pytest
 
-from PySide2.QtWidgets import QWidget, QLineEdit, QDoubleSpinBox, QVBoxLayout, QSpinBox
+from PySide6.QtWidgets import QWidget, QLineEdit, QDoubleSpinBox, QVBoxLayout, QSpinBox
 
 from qtlets import HasQtlets
 

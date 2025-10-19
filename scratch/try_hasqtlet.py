@@ -1,7 +1,7 @@
 import sys
 from random import randint
 
-from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QApplication
 
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit

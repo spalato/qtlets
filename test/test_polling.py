@@ -5,10 +5,10 @@ import time
 
 import pytest
 
-from PySide2.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, \
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, \
     QLineEdit
-from PySide2.QtCore import Qt
-from PySide2.QtTest import QTest
+from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
 
 from qtlets.qtlets import HasQtlets
 from qtlets.widgets import IntEdit, StrEdit
