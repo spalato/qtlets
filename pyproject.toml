@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qtlets"
+version = "0.3"
+description = "Qt with less boilerplate"
+readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Samuel Palato", email = "7659022+spalato@users.noreply.github.com" }
+]
+dependencies = [
+  "PySide6"
+]
+# If you have public URLs, add them under [project.urls] with valid URLs.
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["qtlets*"]
+
+[project.optional-dependencies]
+dev = ["pytest"]

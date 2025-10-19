@@ -5,8 +5,8 @@ from functools import singledispatch
 import logging
 from weakref import proxy
 
-from PySide2.QtCore import QObject, Signal, QTimer
-from PySide2.QtWidgets import QCheckBox, QLineEdit, QAbstractSpinBox
+from PySide6.QtCore import QObject, Signal, QTimer
+from PySide6.QtWidgets import QCheckBox, QLineEdit, QAbstractSpinBox
 
 from .widgets import TypedLineEdit, ValuedComboBox
 

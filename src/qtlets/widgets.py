@@ -1,21 +1,26 @@
 import logging
 
-from PySide2.QtCore import Signal
-from PySide2.QtGui import QIntValidator, QDoubleValidator
-from PySide2.QtWidgets import QPushButton, QLabel, QComboBox, QLineEdit
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QIntValidator, QDoubleValidator
+from PySide6.QtWidgets import QPushButton, QLabel, QComboBox, QLineEdit
 
 logger = logging.getLogger(__name__)
 
 class TypedLineEdit(QLineEdit):
-    def __init__(self, contents, *a, **kw):
+    valueEdited = Signal(object)
+    def __init__(self, contents, fmt="{}", *a, **kw):
         super().__init__(str(contents), *a, **kw)
+        self.fmt = fmt
         self.editingFinished.connect(self.onValueEdited)
 
     def onValueEdited(self):
         self.valueEdited.emit(self.value())
 
     def setValue(self, v):
-        self.setText(str(v))
+        self.setText(self.fmt.format(v))
+
+    def value(self):
+        return self.text()
 
 
 class IntEdit(TypedLineEdit):

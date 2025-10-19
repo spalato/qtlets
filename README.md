@@ -57,4 +57,4 @@ The following features are desired:
 - Leverage Qt's thread affinity when using signals and slots, for setting as 
   well as for getting. 
 - More dedicated widgets.
-- Use either PySide2 or PyQt. See how pyqtgraph does it.
+- Use either PySide6 or PyQt. See how pyqtgraph does it.
