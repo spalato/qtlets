@@ -12,13 +12,25 @@ from .widgets import TypedLineEdit, ValuedComboBox
 
 logger = logging.getLogger(__name__)
 
-# The instance will have a the qtlets in a mapping similar to the traits.
-#
-
 
 class Qtlet(QObject):
     """
-    Adapter between `traitlets` notification and Qt Signals and Slots.
+    Ensures bidirectional communication between parent instance and linked widgets.
+
+    Parameters
+    ----------
+    inst: HasQtlet
+        The parent instance.
+    attr: str
+        The attribute name.
+
+    Notes:
+    ------
+    It's not usually needed to interact with this class: normal operation is via
+    the parent `HasQtlet` instance and its `link_widget` method.
+
+    It can be useful to connect the qtlet to another signal (say, start an
+    operation), like so: `inst.qtlets[attr_name].data_changed.connect(callback)`
     """
     data_changed = Signal(object)  # fallback
 
@@ -54,7 +66,6 @@ class Qtlet(QObject):
 
     def link_widget(self, widget, widget_signal=None, widget_slot=None):
         """Link a widget to the trait."""
-        # todo: use a function and dispatch to get the two methods (widget.valueEdited, widget.setValue)
         # todo: add bounds to validator.. here is probably the best, in "link"
         if widget_signal is None:
             widget_signal = notifier_signal(widget)
@@ -169,6 +180,31 @@ def setter_typed(widget):
 
 
 class HasQtlets(object):
+    """
+    Mixin class to enable bidirectional synchronization between attributes and widgets.
+
+    To enable Qtlets on an existing class, simply mix `HasQtlets` into the
+    inheritance chain. After instantiation, call `link_widget` to keep the widgets
+    in sync with the attribute. The class will now notify the widgets when 
+    value is changed. Conversely, editing the widgets will change the attribute.
+
+    Example:
+    -------
+    ```python
+    from my_module import DataClass as _Existing
+    from qtlets import HasQtlets
+    from gui_widgets import MyWidget
+
+    class DataClass(_Existing, HasQtlets): pass
+
+    widget = MyWidget() # assume this one has multiple subwidgets
+
+    app_data = DataClass()
+    # link two widgets: param_edit and param_edit_dialog to attribute 'param'
+    app_data.link_widget(widget.param_edit, "param")
+    app_data.link_widget(widget.param_edit_dialog, "param")
+    ```
+    """
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         # I think defining this here will be ok. We'll create the qtlets later
@@ -177,7 +213,27 @@ class HasQtlets(object):
 
     def link_widget(self, widget, attr_name: str, widget_signal=None,
                     widget_slot=None) -> Qtlet:
-        """Link widget to attr"""
+        """
+        Link widget to attr. Optionally provide explicit signals and slots.
+        
+        Parameters
+        ----------
+        widget : QObject
+            Target widget. Should have signal sending values of the correct type
+            see `qtlets.widgets` for examples.
+        attr_name: str
+            Attribute name, as per `getattr(self, attr_name)`
+        widget_signal: Qt Signal. Optional
+            Signal emitted by widget when value changes.
+        widget_slot: Qt Slot
+            Slot to update the widget.
+
+        Returns
+        ------
+        qtl : Qtlet
+            The corresponding qtlet instance.
+        
+        """
         # make sure qlet exists
         if attr_name not in self.qtlets:
             qtl = self.create_qtlet(attr_name)
@@ -204,10 +260,9 @@ class HasQtlets(object):
     #         del self.qtlets[attr_name]
 
     def create_qtlet(self, attr_name: str, cls=None):
-        # we need to put this into a function...
         # figure out the correct qtl type
         if cls is None:
+            # Not sure this even works
             cls = qtlet_type(getattr(self, attr_name))
-
         qtl = cls(self, attr_name)
         return qtl

@@ -16,7 +16,10 @@ To enable `qtlets` on an `Existing` class, simply do:
 ```
 class Data(HasQtlets, Existing): pass
 ``` 
-and then use `Data` as a drop-in replacement for `Existing`.
+and then use `Data` as a drop-in replacement for `Existing`. To link widgets,
+make calls to `link_widget`. The widget should be able to send and receive the
+appropriate data type. A few basic types are availalbe in `qtlets.widgets`
+
 
 This library is currently in early stages. The documentation is light, and 
 the API is changing quickly. All help is appreciated...
@@ -46,12 +49,13 @@ The following features are currently supported:
   wonderful?);
 - Support for `properties`;
 - The signal and slots used to communicate with the widget can be specified
-  explicitely. For some widgets, a reasonable default is provided. 
+  explicitly. For some widgets, a reasonable default is provided. 
 
 
 The following features are desired:
 - Adding more data types and widgets.
-- Streamlined type conversions and checks.
+- Streamlined type conversions and checks. For type conversion, we can pass
+  conversion functions to `link_widget`.
 - Support for collections attributes (ex: `instance.values = []`)
 - Support polling (`inst.link(widget, attrname, poll_interval=15)`)
 - Leverage Qt's thread affinity when using signals and slots, for setting as 
