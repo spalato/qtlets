@@ -28,16 +28,27 @@ the API is changing quickly. All help is appreciated...
 
 # Getting started
 
-Requires an environment with python 3.8.
+Requires Python 3.8+.
 
-## Install dependencies
-```
-pip install -r requirements.txt
-pip install -e .
+## Installation
+
+### Regular installation
+```bash
+pip install qtlets
 ```
 
-## Run tests
-`py.test`
+### Development installation
+For development, clone the repository and install with dev dependencies:
+```bash
+pip install -e ".[dev]"
+```
+
+## Running tests
+
+After installation:
+```bash
+pytest
+```
 
 # Features
 
